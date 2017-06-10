@@ -1,0 +1,48 @@
+namespace MyApp.Web.Controllers.Api
+{
+    [AllowAnonymous]
+    [RoutePrefix ("api/blogs")]
+    public class BlogsApiController : ApiController
+    {
+        IBlogService _blogService = null;
+        public BlogsApiController(IBlogService blogService)
+        {
+            _blogService = blogService;
+        }
+
+        // GET ID BY SLUG - READ
+        [Route("slug/{slug}/id"), HttpGet] 
+        public HttpResponseMessage GetBlogId(string slug)
+        {
+            ItemResponse<int> response = new ItemResponse<int>();
+            response.Item = _blogService.GetBlogId(slug);
+			
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+
+        // GET BLOG BY SLUG - READ
+        [Route("slug/{slug}"), HttpGet] 
+        public HttpResponseMessage GetBlog(string slug)
+        {
+            ItemResponse<Blog> response = new ItemResponse<Blog>();
+            response.Item = _blogService.GetBlog(slug);
+
+            if (response.Item == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, response);
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+
+        // GET ALL - READ
+        [Route("slug/{slug}/related"), HttpGet]
+        public HttpResponseMessage GetPublished()
+        {
+            ItemsResponse<Blog> response = new ItemsResponse<Blog>();
+            response.Items = _blogService.GetPublished(true).PickRandom(3).ToList();
+
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+    }
+}
