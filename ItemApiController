@@ -1,0 +1,67 @@
+namespace MyApp.Web.Controllers.Api
+{
+    [RoutePrefix("api/item")] // routes to the item
+    public class ItemApiController : ApiController
+    {
+        // Global
+        UserService userService = new UserService();
+
+        // POST - CREATE
+        [Route, HttpPost]
+        public HttpResponseMessage AddItem(ItemAddRequest model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ModelState);
+            }
+
+            ItemResponse<int> response = new ItemResponse<int>();
+            response.Item = ItemService.InsertItem(model);
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+
+        // GET BY ID - READ
+        [Route("{id:int}"), HttpGet]
+        public HttpResponseMessage Get(int id)
+        {
+            ItemResponse<Item> response = new ItemResponse<Item>();
+            response.Item = ItemService.Get(id);
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+
+        // GET ALL - READ
+        [Route, HttpGet]
+        public HttpResponseMessage Get()
+        {
+            ItemsResponse<Item> response = new ItemsResponse<Item>();
+            response.Items = ItemService.Get();
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+
+        // PUT - UPDATE
+        [Route("{id:int}"), HttpPut]
+        public HttpResponseMessage UpdateItem(ItemUpdateRequest model, int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ModelState);
+            }
+            else
+            {
+                SuccessResponse response = new SuccessResponse();
+                string currentUserId = userService.GetCurrentUserId();
+                ItemService.Update(model, currentUserId, id);
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        // DELETE
+        [Route("{id:int}"), HttpDelete]
+        public HttpResponseMessage Delete(int id)
+        {
+            SuccessResponse response = new SuccessResponse();
+            ItemService.Delete(id);
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+    }
+}
