@@ -1,0 +1,132 @@
+namespace BlogCompleteApp.Controllers.API
+{
+    // (2) - route prefix applies to the class (i.e. local/API/Authors/...)
+    [RoutePrefix("api/authors")] //NOTE: in lowercase, AND apply route to all methods
+    public class AuthorsAPIController : ApiController
+    {
+        // (3) - define first method
+        [Route] //NOTE: this says to use the default (behavior) route method for Get
+        public HttpResponseMessage Get()
+        {
+            AuthorService srv = new AuthorService(); //an instance of AuthorService
+            List<Author> data = srv.GetAll().ToList();
+            ItemsResponse<Author> res = new ItemsResponse<Author>(); //build response
+            res.Items = data;
+            return Request.CreateResponse(HttpStatusCode.OK, res); //returns two 
+        }
+
+        // (4) - GET (RETRIEVE) ONE author;
+        [Route("{id:int}")] //NOTE: input parameter is id and an integer type 
+        public HttpResponseMessage Get(int id)
+        {
+            // (6)
+            try
+            {
+                // (5)
+                AuthorService srv = new AuthorService();
+                Author data = srv.Get(id); //NOTE: this returns one author based on id
+                ItemResponse<Author> res = new ItemResponse<Author>();
+                res.Item = data;
+                return Request.CreateResponse(HttpStatusCode.OK, res);
+            }
+            catch (Exception ex)
+            {
+                //(7) - this will show the message in the browser
+                ErrorResponse res = new ErrorResponse(ex.Message); //NOTE: has two constructors
+                return Request.CreateResponse(HttpStatusCode.NotFound, res);
+            }
+            
+        }
+
+        // (8) define a POST (CREATE) method - call when Adding data
+        [Route]
+        public HttpResponseMessage Post(Author data)
+        {
+            if (!ModelState.IsValid) //NOTE: this looks at all the elements coming in to see if the validation is failing, this will return false, and the block of code below runs
+            {
+                List<string> errors = new List<string>();
+                foreach (ModelState item in ModelState.Values) //NOTE:need to to go the lightbulb and pick the first one; values may have multiple error messages, i.e. for age, required and range, vs.  for first name, required which is only one, so that is why it's in a foreach loop
+                {
+                    foreach (ModelError err in item.Errors) //NOTE: this gives a list of error messages
+                    {
+                        // (10) create if statement
+                        if (string.IsNullOrWhiteSpace(err.ErrorMessage) && err.Exception != null) //NOTE: checking if error message if null, empty string, etc.), and not null
+                        {
+                            errors.Add(err.Exception.Message); //NOTE: picking error message
+                        }
+                        else
+                        {
+                            errors.Add(err.ErrorMessage);
+                        }
+                    }
+                }
+                // (9)
+                ErrorResponse res = new ErrorResponse(errors);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, res);
+            }
+            else //NOTE: 
+            {
+                AuthorService srv = new AuthorService();
+                int authorId = srv.Create(data);
+                ItemResponse<int> res = new ItemResponse<int>();
+                res.Item = authorId;
+                return Request.CreateResponse(HttpStatusCode.OK, res);
+            }
+        }
+
+        // (11) DELETE
+        [Route("{id:int}")] //NOTE: pass in parameters - name and datatype with NO SPACES
+        public HttpResponseMessage Delete(int id)
+        {
+            AuthorService srv = new AuthorService();
+            srv.Delete(id); //pass id variable
+            SuccessResponse res = new SuccessResponse();
+            return Request.CreateResponse(HttpStatusCode.OK, res);
+        }
+
+        // (12) UPDATE (Put)
+        [Route("{id:int}")] // (14) put {id:int}
+        public HttpResponseMessage Put(Author data, int id) //NOTE: passing entire author's data, and  //(15) int id
+        {
+            // (16) copied it from Get(int id)
+            AuthorService srv = new AuthorService();
+            try
+            {
+                Author tempData = srv.Get(id); 
+            }
+            catch (Exception ex)
+            {
+                ErrorResponse res = new ErrorResponse(ex.Message); 
+                return Request.CreateResponse(HttpStatusCode.NotFound, res);
+            }
+
+            // (13) copy from POST and just make a few changes
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = new List<string>();
+                foreach (ModelState item in ModelState.Values) //NOTE:need to to go the lightbulb and pick the first one; values may have multiple error messages, i.e. for age, required and range, vs.  for first name, required which is only one, so that is why it's in a foreach loop
+                {
+                    foreach (ModelError err in item.Errors) //NOTE: this gives a list of error messages
+                    {
+                        if (string.IsNullOrWhiteSpace(err.ErrorMessage) && err.Exception != null) //NOTE: checking if error message if null, empty string, etc.), and not null
+                        {
+                            errors.Add(err.Exception.Message); //NOTE: picking error message
+                        }
+                        else
+                        {
+                            errors.Add(err.ErrorMessage);
+                        }
+                    }
+                }
+                ErrorResponse res = new ErrorResponse(errors);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, res);
+            }
+            else //NOTE: 
+            {
+                srv.Update(data); //does not return anything back
+                SuccessResponse res = new SuccessResponse();
+                return Request.CreateResponse(HttpStatusCode.OK, res);
+            }
+        }
+    }
+}
